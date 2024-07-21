@@ -1,12 +1,20 @@
 # Ren'Py UI elements for GVH fan games
 
+## GVH-style choice menu
+
+This just makes the choice menus styled more like the ones in GVH.  To use them:
+1. Copy the file `gvhchoice.rpy` into your game folder, and copy the folder `images/gvhchoice` into your `images` folder.
+2. Thats... really it.  Choice menus are called the same way as before.
+
+Only extra feature added so far: if you use an arrow `->` in your choice text, e.g. `Say something mean -> Chicken out`, it will put a button with the first text, but when the user tries to select it, it will static out to the second choice.
+
 ## Rhythm game
 
 This provides a UI for a rhythm game in Ren'Py, using similar controls to GVH.
 
 ### How to use
 
-1. Copy the file `rhythmgame.rpy` into your script folder, and copy the folder `images/rhythmgame` into your `images` folder.
+1. Copy the file `rhythmgame.rpy` into your game folder, and copy the folder `images/rhythmgame` into your `images` folder.
 2. Pick a short name for the rhythm game.  In this example, *mygame* will be used, but you can replace that with whatever fits.
 3. Copy a music file into `audio/*mygame*.mp3`
 4. Within your script, activate the screen in *beat recording* mode by adding the line `show screen rhythmgame("mygame",mode="record")`.  You may need to add a pause statement so your script doesn't end prematurely while the recording is happening.
