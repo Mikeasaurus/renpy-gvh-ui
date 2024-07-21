@@ -21,3 +21,7 @@ This provides a UI for a rhythm game in Ren'Py, using similar controls to GVH.
 You can have different scenes show up while the game is going, to add some
 montages or something.
 
+**Notes**
+
+- If you do have sequences of animations going on while the rhythmgame screen is active, you should stop the user from skipping through the animations if they press the spacebar by accident.  One way is to use hard pauses for delays, e.g. instead of `pause 5.0` use `$ renpy.pause (5.0, hard=True)`.
+- Some stuff is hard-coded assuming you've set up your game in the 1920x1080 resolution.
