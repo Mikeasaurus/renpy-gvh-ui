@@ -17,7 +17,7 @@ screen choice(items):
                     hbox:
                         image "leftmenubutton"
                         frame:
-                            background Frame("choice/centremenubutton.png",tile="integer",ysize=75)
+                            background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
                             textbutton i.caption action i.action text_size 40
                         image "rightmenubutton"
                 # Button that statics out to other choice
@@ -29,7 +29,7 @@ screen choice(items):
                             foreground Frame(ImageReference("leftmenubuttonstaticoff"),ysize=75)
                             null
                         frame id "centre_%d"%n:
-                            background Frame("choice/centremenubutton.png",tile="integer",ysize=75)
+                            background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
                             fixed:
                                 fit_first True
                                 # Use first textbutton as dummy to keep the right size.
