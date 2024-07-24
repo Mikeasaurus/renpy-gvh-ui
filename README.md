@@ -23,6 +23,9 @@ pause
 hide screen texting
 fang "Well, that was fun."
 ```
+3. You can add icons for the people texting.  Just create a 90x90 image with the character's name and the word "icon", e.g. *reedicon.png*.
+4. Optionally, if you specify a character for the point of view, and that character's image has a `texting` attribute, then that attribute will be triggered while that person is writing a text.
+
 **Notes**
 - This will override any custom "say" screen you may have.
 - Word wrapping sometime acts weird in the chat bubbles, causing them to extend across the texting area and get cut off.  If this happens, you may need to add your own line breaks (`\n`) to manually wrap things at an earlier point in the line.
