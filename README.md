@@ -8,6 +8,26 @@ This just makes the choice menus styled more like the ones in GVH.  To use them:
 
 Only extra feature added so far: if you use an arrow `->` in your choice text, e.g. `Say something mean -> Chicken out`, it will put a button with the first text, but when the user tries to select it, it will static out to the second choice.
 
+## Texting overlay
+
+This redirects the character dialogue into a texting interface.  To use it:
+1. Copy the file `texting.rpy` into your game folder, and copy the folder `images/texting` into your `images` folder.
+2. To activate texting mode, use `show screen texting()`.  Optionally, you can add a chat title at the top, and specify which character's point of view (pov) this is from.  For example:
+```renpy
+fang "Time to check my phone"
+show screen texting ("WORM CHAT", pov=fang)
+fang "Hey guys"
+reed "Sup?"
+trish "Sup?"
+pause
+hide screen texting
+fang "Well, that was fun."
+```
+**Notes**
+- This will override any custom "say" screen you may have.
+- Word wrapping sometime acts weird in the chat bubbles, causing them to extend across the texting area and get cut off.  If this happens, you may need to add your own line breaks (`\n`) to manually wrap things at an earlier point in the line.
+- This interface can only handle 1 or 2 lines in the text bubble, so need to keep things short and sweet.
+
 ## Rhythm game
 
 This provides a UI for a rhythm game in Ren'Py, using similar controls to GVH.
