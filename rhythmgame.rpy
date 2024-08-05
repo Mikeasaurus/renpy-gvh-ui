@@ -174,9 +174,10 @@ transform reallyup_e:
 transform briefly:
     easeout 0.1 zoom 2.0 alpha 0.0
 
-default rhythmfile = None
-default lyricfile = None
-default get_lyric_infile = None
+default rhythmfile = None   # For saving beat patterns (in "record" mode)
+default lyricfile = None    # For saving lyric display times (in "lyric" mode)
+default rhythms = None      # List of beat timings (loaded from rhythm file)
+default lyric_infile = None # For reading each line of lyrics (in "lyric" mode)
 
 screen rhythmgame(name,mode="play"):
     layer "rhythmgame"
@@ -421,17 +422,22 @@ screen rhythmgame(name,mode="play"):
             pass
         # Get all beats
         def get_beats(name,mode):
-            global rhythmgame_leadin
+            global rhythmgame_leadin, rhythms
             if mode != "play": return []
-            beat_id = 1
-            # Open rhythm file
-            with renpy.open_file("audio/"+name+".rhythm.txt") as f:
-                for line in f:
-                    pos, direction = line.strip().split()
-                    pos = float(pos)
-                    direction = direction.decode()
-                    yield (beat_id, pos+rhythmgame_leadin, direction)
-                    beat_id += 1
+            # Open rhythm file?
+            if rhythms is None:
+                _rhythms = []
+                beat_id = 1
+                with renpy.open_file("audio/"+name+".rhythm.txt") as f:
+                    for line in f:
+                        pos, direction = line.strip().split()
+                        pos = float(pos)
+                        direction = direction.decode()
+                        _rhythms.append ((beat_id, pos+rhythmgame_leadin, direction))
+                        beat_id += 1
+                rhythms = _rhythms
+            for beat_id, pos, direction in rhythms:
+                yield (beat_id, pos, direction)
         # Get all lyrics and timings
         def get_lyrics(name,mode):
             global rhythmgame_leadin
@@ -665,6 +671,10 @@ screen rhythmgame(name,mode="play"):
                 global rhythmfile
                 rhythmfile.close()
                 rhythmfile = None
+            if mode == "lyrics":
+                global lyricfile
+                lyricfile.close()
+                lyricfile = None
             # No more onscreen beats.
             global onscreen_leftbeats, onscreen_rightbeats, onscreen_upbeats
             global onscreen_Wbeats, onscreen_Abeats, onscreen_Sbeats, onscreen_Dbeats
@@ -678,6 +688,9 @@ screen rhythmgame(name,mode="play"):
             onscreen_Qbeats = dict()
             onscreen_Ebeats = dict()
             wasd_count = 0
+            global rhythmgame_started, rhythms
+            rhythmgame_started = False
+            rhythms = None
             # Clear the rhythmgame screen from display.
             ui.layer("rhythmgame")
             ui.clear()
