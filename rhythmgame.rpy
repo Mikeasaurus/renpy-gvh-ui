@@ -4,12 +4,10 @@
 # - Assumes a screen resolution of 1920x1080.
 
 # State of button presses.
-# If this value is > 0 when a note lands, then it was a successful hit.
-# Note: could in theory have a value > 1 if the user was hovering their mouse
-#       over the pad while pressing the corresponding arrow key.
-default leftpressed = 0
-default rightpressed = 0
-default uppressed = 0
+# If this value is True when a note lands, then it was a successful hit.
+default leftpressed = False
+default rightpressed = False
+default uppressed = False
 
 # The amount of time before game actually starts.
 # (To allow time for some intro animation for the controls)
@@ -236,7 +234,7 @@ screen rhythmgame(name,mode="play"):
         def pressleft(mode=None):
             global rhythmgame_started, leftpressed
             if not rhythmgame_started: return
-            leftpressed += 1
+            leftpressed = True
             pos = renpy.music.get_pos() or 0.0
             if mode == "record":
                 rhythmfile.write("%s left\n"%pos)
@@ -255,17 +253,15 @@ screen rhythmgame(name,mode="play"):
         def unpressleft():
             global leftpressed
             if not rhythmgame_started: return
-            leftpressed -= 1
-            if leftpressed <= 0:
-                leftpressed = 0
-                renpy.hide("leftbigcircle",layer="rhythmgame")
-                ###
+            leftpressed = False
+            renpy.hide("leftbigcircle",layer="rhythmgame")
+            ###
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle right button press
         def pressright(mode=None):
             global rhythmgame_started, rightpressed
             if not rhythmgame_started: return
-            rightpressed += 1
+            rightpressed = True
             pos = renpy.music.get_pos() or 0.0
             if mode == "record":
                 rhythmfile.write("%s right\n"%renpy.music.get_pos())
@@ -284,17 +280,15 @@ screen rhythmgame(name,mode="play"):
         def unpressright():
             global rhythmgame_started, rightpressed
             if not rhythmgame_started: return
-            rightpressed -= 1
-            if rightpressed <= 0:
-                rightpressed = 0
-                renpy.hide("rightbigcircle",layer="rhythmgame")
-                ###
+            rightpressed = False
+            renpy.hide("rightbigcircle",layer="rhythmgame")
+            ###
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle up button press
         def pressup(mode=None):
             global rhythmgame_started, uppressed
             if not rhythmgame_started: return
-            uppressed += 1
+            uppressed = True
             pos = renpy.music.get_pos() or 0.0
             if mode == "record":
                 rhythmfile.write("%s up\n"%renpy.music.get_pos())
@@ -313,11 +307,9 @@ screen rhythmgame(name,mode="play"):
         def unpressup():
             global rhythmgame_started, uppressed
             if not rhythmgame_started: return
-            uppressed -= 1
-            if uppressed <= 0:
-                uppressed = 0
-                renpy.hide("upbigcircle",layer="rhythmgame")
-                ###
+            uppressed = False
+            renpy.hide("upbigcircle",layer="rhythmgame")
+            ###
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle W button press
         def pressW(mode=None):
@@ -541,7 +533,7 @@ screen rhythmgame(name,mode="play"):
         # Routines for checking if a beat is running into an already-activated
         # pad.
         def check_left_collision(beat_id):
-            if leftpressed == 0: return
+            if not leftpressed: return
             final_pos = onscreen_leftbeats.pop(beat_id,None)
             if final_pos is None: return #???
             renpy.hide("leftbeat%03d"%beat_id,layer="rhythmgame")
@@ -551,7 +543,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
             ###
         def check_right_collision(beat_id):
-            if rightpressed == 0: return
+            if not rightpressed: return
             final_pos = onscreen_rightbeats.pop(beat_id,None)
             if final_pos is None: return #???
             renpy.hide("rightbeat%03d"%beat_id,layer="rhythmgame")
@@ -561,7 +553,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
             ###
         def check_up_collision(beat_id):
-            if uppressed == 0: return
+            if not uppressed: return
             final_pos = onscreen_upbeats.pop(beat_id,None)
             if final_pos is None: return #???
             renpy.hide("upbeat%03d"%beat_id,layer="rhythmgame")
@@ -661,9 +653,9 @@ screen rhythmgame(name,mode="play"):
             quick_menu = True
             # Rest state of button presses, so they start unpressed for the
             # next rhythmgame after this one.
-            leftpressed = 0
-            rightpressed = 0
-            uppressed = 0
+            leftpressed = False
+            rightpressed = False
+            uppressed = False
             # Stop any music that's playing
             renpy.music.stop()
             # Close rhythm and lyrics files.
@@ -716,20 +708,6 @@ screen rhythmgame(name,mode="play"):
         key "K_n" action Function(pressN)
     # Disable menu during minigame (the beats won't pause!)
     key "game_menu" action donothing
-
-    # Handle non-keyboard triggers (hovering over pads).
-    # Also handles taps from touch screens, although it's a little flaky
-    # for the web version (can tap to activate the pad, but holding your finger
-    # down can cause the browser to do something weird like bring up a select
-    # / copy / etc. prompt).
-    imagemap:
-        ground "invisible"
-        alpha False
-        # Note: I needed to add a dummy "clicked" parameter, or other things
-        # like "hovered" don't work!
-        hotspot (795, 845, 90, 90) clicked donothing hovered pressleft unhovered unpressleft
-        hotspot (1035, 845, 90, 90) clicked donothing hovered pressright unhovered unpressright
-        hotspot (915, 725, 90, 90) clicked donothing hovered pressup unhovered unpressup
 
     # Add a textbox for showing the lyrics.
     frame:
