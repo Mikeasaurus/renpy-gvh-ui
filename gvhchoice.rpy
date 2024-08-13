@@ -18,7 +18,7 @@ screen choice(items):
                         image "leftmenubutton"
                         frame:
                             background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                            textbutton i.caption action i.action text_size 40
+                            textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff"
                         image "rightmenubutton"
                 # Button that statics out to other choice
                 else:
@@ -34,7 +34,7 @@ screen choice(items):
                                 fit_first True
                                 # Use first textbutton as dummy to keep the right size.
                                 textbutton '{alpha=0.0}'+i.caption.split('->')[0].strip()+'{/alpha}' text_size 40
-                                textbutton i.caption action i.action text_size 40 xalign 0.5
+                                textbutton i.caption action i.action text_size 40 xalign 0.5 text_color "#777777" text_hover_color "#ffffff"
                             foreground Frame(ImageReference("centremenubuttonstaticoff"),tile=True,ysize=75)
                         frame id "right_%d"%n:
                             xsize 38 ysize 75
