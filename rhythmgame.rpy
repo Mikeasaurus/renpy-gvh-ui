@@ -188,34 +188,34 @@ screen rhythmgame(name,mode="play"):
             # Turn off quick menu at bottom, it's too distracting!
             global quick_menu
             quick_menu = False
-            ###
+            renpy.restart_interaction()
         # Animation for introducing the centre circle
         def show_centrecircle():
             renpy.show("centrecircle",layer="rhythmgame",at_list=[centreish],tag="centrecircle")
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=892+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Animation for introducing the left landing pad
         def show_leftcircle():
             renpy.show("smallcircle1",layer="rhythmgame",at_list=[leftish],tag="leftcircle")
             xpos = left_beat_x1
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Animation for introducing the up landing pad
         def show_upcircle():
             renpy.show("smallcircle3",layer="rhythmgame",at_list=[upish],tag="upcircle")
             ypos = up_beat_y1
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=892+68,ypos=ypos+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Animation for introducing the right landing pad
         def show_rightcircle():
             renpy.show("smallcircle2",layer="rhythmgame",at_list=[rightish],tag="rightcircle")
             xpos = right_beat_x1
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Start playing the song
         def start_music(name,mode):
             global rhythmgame_started
@@ -249,13 +249,13 @@ screen rhythmgame(name,mode="play"):
                     xpos = int(left_beat_x1 - (left_beat_x1-left_beat_x0)*(final_pos-pos)/beat_leadtime)
                     renpy.hide("hit",layer="rhythmgame")
                     renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def unpressleft():
             global leftpressed
             if not rhythmgame_started: return
             leftpressed = False
             renpy.hide("leftbigcircle",layer="rhythmgame")
-            ###
+            renpy.restart_interaction()
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle right button press
         def pressright(mode=None):
@@ -276,13 +276,13 @@ screen rhythmgame(name,mode="play"):
                     xpos = int(right_beat_x1 - (right_beat_x1-right_beat_x0)*(final_pos-pos)/beat_leadtime)
                     renpy.hide("hit",layer="rhythmgame")
                     renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def unpressright():
             global rhythmgame_started, rightpressed
             if not rhythmgame_started: return
             rightpressed = False
             renpy.hide("rightbigcircle",layer="rhythmgame")
-            ###
+            renpy.restart_interaction()
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle up button press
         def pressup(mode=None):
@@ -303,13 +303,13 @@ screen rhythmgame(name,mode="play"):
                     ypos = int(up_beat_y1 - (up_beat_y1-up_beat_y0)*(final_pos-pos)/beat_leadtime)
                     renpy.hide("hit",layer="rhythmgame")
                     renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=892+68,ypos=ypos+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def unpressup():
             global rhythmgame_started, uppressed
             if not rhythmgame_started: return
             uppressed = False
             renpy.hide("upbigcircle",layer="rhythmgame")
-            ###
+            renpy.restart_interaction()
             renpy.show("centrecircle",layer="rhythmgame",at_list=[slide_back])
         # Handle W button press
         def pressW(mode=None):
@@ -324,7 +324,7 @@ screen rhythmgame(name,mode="play"):
                     del onscreen_Wbeats[beat_id]
                     renpy.hide("hit_pad",layer="rhythmgame")
                     renpy.show("hit",tag="hit_pad",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle A button press
         def pressA(mode=None):
             pos = renpy.music.get_pos() or 0.0
@@ -338,7 +338,7 @@ screen rhythmgame(name,mode="play"):
                     del onscreen_Abeats[beat_id]
                     renpy.hide("hit_pad",layer="rhythmgame")
                     renpy.show("hit",tag="hit_pad",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle S button press
         def pressS(mode=None):
             pos = renpy.music.get_pos() or 0.0
@@ -352,7 +352,7 @@ screen rhythmgame(name,mode="play"):
                     del onscreen_Sbeats[beat_id]
                     renpy.hide("hit_pad",layer="rhythmgame")
                     renpy.show("hit",tag="hit_pad",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle D button press
         def pressD(mode=None):
             pos = renpy.music.get_pos() or 0.0
@@ -366,7 +366,7 @@ screen rhythmgame(name,mode="play"):
                     del onscreen_Dbeats[beat_id]
                     renpy.hide("hit_pad",layer="rhythmgame")
                     renpy.show("hit",tag="hit_pad",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle Q button press
         def pressQ(mode=None):
             pos = renpy.music.get_pos() or 0.0
@@ -383,7 +383,7 @@ screen rhythmgame(name,mode="play"):
                     ypos = int(qe_beat_y1 - (qe_beat_y1-qe_beat_y0)*(final_pos-pos)/beat_leadtime)
                     renpy.hide("hit_q",layer="rhythmgame")
                     renpy.show("hit",tag="hit_q",layer="rhythmgame",at_list=[Transform(xpos=qe_beat_x0,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle E button press
         def pressE(mode=None):
             pos = renpy.music.get_pos() or 0.0
@@ -398,7 +398,7 @@ screen rhythmgame(name,mode="play"):
                     ypos = int(qe_beat_y1 - (qe_beat_y1-qe_beat_y0)*(final_pos-pos)/beat_leadtime)
                     renpy.hide("hit_e",layer="rhythmgame")
                     renpy.show("hit",tag="hit_e",layer="rhythmgame",at_list=[Transform(xpos=qe_beat_x1,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Handle progressing through lyrics (for recording their timing.)
         def pressN():
             global lyricfile, lyric_infile
@@ -408,7 +408,7 @@ screen rhythmgame(name,mode="play"):
             s = renpy.get_screen('rhythmgame')
             lyrics = renpy.get_widget(s,id='lyrics')
             lyrics.set_text(line)
-            ###
+            renpy.restart_interaction()
         # Dummy function (do nothing)
         def donothing():
             pass
@@ -453,17 +453,17 @@ screen rhythmgame(name,mode="play"):
             global rhythmgame_leadin
             renpy.show("beat",layer="rhythmgame",at_list=[reallyleft],tag="leftbeat%03d"%beat_id)
             onscreen_leftbeats[beat_id] = final_pos - rhythmgame_leadin
-            ###
+            renpy.restart_interaction()
         def draw_right_beat(beat_id,final_pos):
             global rhythmgame_leadin
             renpy.show("beat",layer="rhythmgame",at_list=[reallyright],tag="rightbeat%03d"%beat_id)
             onscreen_rightbeats[beat_id] = final_pos - rhythmgame_leadin
-            ###
+            renpy.restart_interaction()
         def draw_up_beat(beat_id,final_pos):
             global rhythmgame_leadin
             renpy.show("beat",layer="rhythmgame",at_list=[reallyup],tag="upbeat%03d"%beat_id)
             onscreen_upbeats[beat_id] = final_pos - rhythmgame_leadin
-            ###
+            renpy.restart_interaction()
         def draw_W_pad(beat_id,final_pos):
             # Find somewhere to draw the pad.
             global wasd_count, rhythmgame_leadin
@@ -475,7 +475,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("wpad",layer="rhythmgame",at_list=[location],tag="wpad%03d"%beat_id)
             renpy.show("wasd_ring",layer="rhythmgame",at_list=[location,closing_in],tag="ring%03d"%beat_id)
             onscreen_Wbeats[beat_id] = (final_pos-rhythmgame_leadin,xpos,ypos)
-            ###
+            renpy.restart_interaction()
         def draw_A_pad(beat_id,final_pos):
             # Find somewhere to draw the pad.
             global wasd_count, rhythmgame_leadin
@@ -487,7 +487,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("apad",layer="rhythmgame",at_list=[location],tag="apad%03d"%beat_id)
             renpy.show("wasd_ring",layer="rhythmgame",at_list=[location,closing_in],tag="ring%03d"%beat_id)
             onscreen_Abeats[beat_id] = (final_pos-rhythmgame_leadin,xpos,ypos)
-            ###
+            renpy.restart_interaction()
         def draw_S_pad(beat_id,final_pos):
             # Find somewhere to draw the pad.
             global wasd_count, rhythmgame_leadin
@@ -499,7 +499,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("spad",layer="rhythmgame",at_list=[location],tag="spad%03d"%beat_id)
             renpy.show("wasd_ring",layer="rhythmgame",at_list=[location,closing_in],tag="ring%03d"%beat_id)
             onscreen_Sbeats[beat_id] = (final_pos-rhythmgame_leadin,xpos,ypos)
-            ###
+            renpy.restart_interaction()
         def draw_D_pad(beat_id,final_pos):
             # Find somewhere to draw the pad.
             global wasd_count, rhythmgame_leadin
@@ -511,7 +511,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("dpad",layer="rhythmgame",at_list=[location],tag="dpad%03d"%beat_id)
             renpy.show("wasd_ring",layer="rhythmgame",at_list=[location,closing_in],tag="ring%03d"%beat_id)
             onscreen_Dbeats[beat_id] = (final_pos-rhythmgame_leadin,xpos,ypos)
-            ###
+            renpy.restart_interaction()
         def draw_Q_beat(beat_id,final_pos):
             global rhythmgame_leadin
             renpy.show("chevron",layer="rhythmgame",at_list=[reallyup_q],tag="qbeat%03d"%beat_id)
@@ -520,7 +520,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("chevron",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5)],tag="qpad%03d"%beat_id)
             renpy.show("chevron_q",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5)],tag="qkey%03d"%beat_id)
             onscreen_Qbeats[beat_id] = final_pos - rhythmgame_leadin
-            ###
+            renpy.restart_interaction()
         def draw_E_beat(beat_id,final_pos):
             global rhythmgame_leadin
             renpy.show("chevron",layer="rhythmgame",at_list=[reallyup_e],tag="ebeat%03d"%beat_id)
@@ -529,7 +529,7 @@ screen rhythmgame(name,mode="play"):
             renpy.show("chevron",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5)],tag="epad%03d"%beat_id)
             renpy.show("chevron_e",layer="rhythmgame",at_list=[Transform(xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5)],tag="ekey%03d"%beat_id)
             onscreen_Ebeats[beat_id] = final_pos - rhythmgame_leadin
-            ###
+            renpy.restart_interaction()
         # Routines for checking if a beat is running into an already-activated
         # pad.
         def check_left_collision(beat_id):
@@ -541,7 +541,7 @@ screen rhythmgame(name,mode="play"):
             xpos = int(left_beat_x1 - (left_beat_x1-left_beat_x0)*beat_gracetime/beat_leadtime)
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def check_right_collision(beat_id):
             if not rightpressed: return
             final_pos = onscreen_rightbeats.pop(beat_id,None)
@@ -551,7 +551,7 @@ screen rhythmgame(name,mode="play"):
             xpos = int(right_beat_x1 - (right_beat_x1-right_beat_x0)*beat_gracetime/beat_leadtime)
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def check_up_collision(beat_id):
             if not uppressed: return
             final_pos = onscreen_upbeats.pop(beat_id,None)
@@ -561,7 +561,7 @@ screen rhythmgame(name,mode="play"):
             ypos = int(up_beat_y1 - (up_beat_y1-up_beat_y0)*beat_gracetime/beat_leadtime)
             renpy.hide("hit",layer="rhythmgame")
             renpy.show("hit",layer="rhythmgame",at_list=[Transform(xpos=892+68,ypos=ypos+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Routines for handling beat misses
         def miss_left(beat_id):
             if onscreen_leftbeats.pop(beat_id,None) is None: return
@@ -569,21 +569,21 @@ screen rhythmgame(name,mode="play"):
             xpos = left_beat_x1
             renpy.hide("miss",layer="rhythmgame")
             renpy.show("miss",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_right(beat_id):
             if onscreen_rightbeats.pop(beat_id,None) is None: return
             renpy.hide("rightbeat%03d"%beat_id,layer="rhythmgame")
             xpos = right_beat_x1
             renpy.hide("miss",layer="rhythmgame")
             renpy.show("miss",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos+68,ypos=822+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_up(beat_id):
             if onscreen_upbeats.pop(beat_id,None) is None: return
             renpy.hide("upbeat%03d"%beat_id,layer="rhythmgame")
             ypos = up_beat_y1
             renpy.hide("miss",layer="rhythmgame")
             renpy.show("miss",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=892+68,ypos=ypos+68,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_W(beat_id):
             beat_info = onscreen_Wbeats.pop(beat_id,None)
             if beat_info is None: return
@@ -592,7 +592,7 @@ screen rhythmgame(name,mode="play"):
             renpy.hide("ring%03d"%beat_id,layer="rhythmgame")
             renpy.hide("miss_pad",layer="rhythmgame")
             renpy.show("miss",tag="miss_pad",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_A(beat_id):
             beat_info = onscreen_Abeats.pop(beat_id,None)
             if beat_info is None: return
@@ -601,7 +601,7 @@ screen rhythmgame(name,mode="play"):
             renpy.hide("ring%03d"%beat_id,layer="rhythmgame")
             renpy.hide("miss_pad",layer="rhythmgame")
             renpy.show("miss",tag="miss_pad",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_S(beat_id):
             beat_info = onscreen_Sbeats.pop(beat_id,None)
             if beat_info is None: return
@@ -610,7 +610,7 @@ screen rhythmgame(name,mode="play"):
             renpy.hide("ring%03d"%beat_id,layer="rhythmgame")
             renpy.hide("miss_pad",layer="rhythmgame")
             renpy.show("miss",tag="miss_pad",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_D(beat_id):
             beat_info = onscreen_Dbeats.pop(beat_id,None)
             if beat_info is None: return
@@ -619,7 +619,7 @@ screen rhythmgame(name,mode="play"):
             renpy.hide("ring%03d"%beat_id,layer="rhythmgame")
             renpy.hide("miss_pad",layer="rhythmgame")
             renpy.show("miss",tag="miss_pad",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_Q(beat_id):
             if onscreen_Qbeats.pop(beat_id,None) is None: return
             renpy.hide("qpad%03d"%beat_id,layer="rhythmgame")
@@ -629,7 +629,7 @@ screen rhythmgame(name,mode="play"):
             ypos = qe_beat_y1
             renpy.hide("miss_q",layer="rhythmgame")
             renpy.show("miss",tag="miss_q",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         def miss_E(beat_id):
             if onscreen_Ebeats.pop(beat_id,None) is None: return
             renpy.hide("epad%03d"%beat_id,layer="rhythmgame")
@@ -639,7 +639,7 @@ screen rhythmgame(name,mode="play"):
             ypos = qe_beat_y1
             renpy.hide("miss_e",layer="rhythmgame")
             renpy.show("miss",tag="miss_e",layer="rhythmgame",at_list=[Transform(alpha=0.5,xpos=xpos,ypos=ypos,xanchor=0.5,yanchor=0.5),briefly])
-            ###
+            renpy.restart_interaction()
         # Update lyrics at the bottom of the screen.
         def lyric (line):
             s = renpy.get_screen('rhythmgame')
