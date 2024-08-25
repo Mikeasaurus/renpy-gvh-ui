@@ -172,6 +172,7 @@ transform reallyup_e:
 transform briefly:
     easeout 0.1 zoom 2.0 alpha 0.0
 
+default file_prefix = None  # Directory and file prefix for rhythm game files, needed for recording mode.
 default rhythmfile = None   # For saving beat patterns (in "record" mode)
 default lyricfile = None    # For saving lyric display times (in "lyric" mode)
 default rhythms = None      # List of beat timings (loaded from rhythm file)
@@ -180,6 +181,7 @@ default lyric_infile = None # For reading each line of lyrics (in "lyric" mode)
 screen rhythmgame(name,mode="play"):
     layer "rhythmgame"
     #modal True
+    # Most of the rhythmgame is rendered dynamically with Python functions.
     python:
         # Set up the screen
         def start(name,mode):
@@ -218,15 +220,19 @@ screen rhythmgame(name,mode="play"):
             renpy.restart_interaction()
         # Start playing the song
         def start_music(name,mode):
-            global rhythmgame_started
+            global rhythmgame_started, file_prefix
+            # Get the path and prefix for the rhythm files for recording.
+            # This is done by opening a known file, and querying for its location.
+            file_prefix = renpy.open_file("audio/"+name+".mp3").name[:-4]
             # Open rhythm file for recording?
+            # Use .tmp extension to avoid overwriting any existing file (for now)
             if mode == "record":
                 global rhythmfile
-                rhythmfile = open(name+".rhythm.txt",'wt')
+                rhythmfile = open(file_prefix+".rhythm.txt.tmp",'wt')
             if mode == "lyrics":
                 global lyricfile, lyric_infile
                 lyric_infile = renpy.open_file("audio/"+name+".lyrics.txt")
-                lyricfile = open(name+".lyrics-cue.txt",'wt')
+                lyricfile = open(file_prefix+".lyrics-cue.txt.tmp",'wt')
             # Start the music
             renpy.music.play(name+".mp3",loop=False)
             rhythmgame_started = True  # Can animate button presses now.
@@ -645,7 +651,53 @@ screen rhythmgame(name,mode="play"):
             s = renpy.get_screen('rhythmgame')
             lyrics = renpy.get_widget(s,id='lyrics')
             lyrics.set_text(line)
-
+        # Near end of minigame (saving files)
+        def finalize_recording(mode,finish):
+            global rhythmfile, lyricfile
+            s = renpy.get_screen('rhythmgame')
+            v = renpy.get_widget(s,id='promptbox')
+            if mode == "record":
+                rhythmfile.close()
+                bakfile = file_prefix + ".rhythm.txt.bak"
+                outfile = file_prefix + ".rhythm.txt"
+                tmpfile = file_prefix + ".rhythm.txt.tmp"
+            elif mode == "lyrics":
+                lyricfile.close()
+                bakfile = file_prefix + ".lyrics-cue.txt.bak"
+                outfile = file_prefix + ".lyrics-cue.txt"
+                tmpfile = file_prefix + ".lyrics-cue.txt.tmp"
+            def overwrite (bakfile, outfile, tmpfile):
+                # Make a backup copy of the old recording, just in case.
+                bak = open(bakfile,'wt')
+                out = open(outfile, 'rt')
+                for line in out:
+                    bak.write(line)
+                bak.close()
+                out.close()
+                # Save copy of new recording.
+                out = open(outfile,'wt')
+                tmp = open(tmpfile,'rt')
+                for line in tmp:
+                    out.write(line)
+                out.close()
+                tmp.close()
+            # Check if output file already exists.
+            # If it does, them prompt for overwriting.
+            try:
+                out = open(outfile, 'rt')
+                out.close()
+                v.add(Text("A previous recording has already been made.  Overwrite?", textalign=0.5, outlines=[(5,"000000",0,0)]))
+                v.add(TextButton("Yes",xalign=0.5, text_size=50, text_outlines=[(5,"000000",0,0)], action=[Function(overwrite,bakfile,outfile,tmpfile),Function(finish,mode)]))
+                v.add(TextButton("No",xalign=0.5, text_size=50, text_outlines=[(5,"000000",0,0)], action=Function(finish,mode)))
+                renpy.restart_interaction()
+            except OSError:  # File does not exist, nothing will be overwritten.
+                out = open(outfile,'wt')
+                tmp = open(tmpfile,'rt')
+                for line in tmp:
+                    out.write(line)
+                out.close()
+                tmp.close()
+                finish(mode)
         # End of minigame (cleanup)
         def finish(mode):
             # Turn on quick menu at bottom
@@ -658,14 +710,12 @@ screen rhythmgame(name,mode="play"):
             uppressed = False
             # Stop any music that's playing
             renpy.music.stop()
-            # Close rhythm and lyrics files.
+            # Blank out rhythm and lyrics files.
             if mode == "record":
                 global rhythmfile
-                rhythmfile.close()
                 rhythmfile = None
             if mode == "lyrics":
                 global lyricfile
-                lyricfile.close()
                 lyricfile = None
             # No more onscreen beats.
             global onscreen_leftbeats, onscreen_rightbeats, onscreen_upbeats
@@ -709,7 +759,7 @@ screen rhythmgame(name,mode="play"):
     # Disable menu during minigame (the beats won't pause!)
     key "game_menu" action donothing
 
-    # Add a textbox for showing the lyrics.
+    # Add a text widget for showing the lyrics.
     frame:
         background None
         xsize 1.0
@@ -718,6 +768,16 @@ screen rhythmgame(name,mode="play"):
             xalign 0.5
             # Text will be dynamically updated during rhythmgame.
             text "" textalign 0.5 line_spacing 10 outlines [(5,"000000",0,0)] id "lyrics"
+    # Add a text widget and buttons for getting user input about saving files.
+    frame:
+        background None
+        xsize 1.0
+        yanchor 0.5 ypos 0.2
+        hbox:
+            xalign 0.5
+            vbox:
+                spacing 50
+                id "promptbox"
 
     # Call the startup routine once for this screen.
     on "show" action Function(start,name,mode)
@@ -763,7 +823,7 @@ screen rhythmgame(name,mode="play"):
         timer pos+2.0 action [Function(finish,mode),Return()]
     # Allow termination of rhything / lyrics recording with space bar.
     else:
-        key "K_SPACE" action [Function(finish,mode),Return()]
+        key "K_SPACE" action [Function(finalize_recording,mode,finish),Return()]
     # Queue up the lyrics.
     for pos, line in get_lyrics(name,mode):
         timer pos action Function(lyric,line)
