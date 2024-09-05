@@ -235,7 +235,7 @@ screen choice(items):
                 dummy_button = fixed.visit()[0]
                 button = fixed.visit()[-1]
                 oldtext, newtext = button.child.text[0].split('->')
-                def do_static (when=datetime.now()+timedelta(seconds=0.5),left=left,centre=centre,right=right,button=button,newtext=newtext,action=button.action):
+                def do_static (when=datetime.now()+timedelta(seconds=0.5),left=left,centre=centre,right=right,dummy_button=dummy_button,button=button,newtext=newtext,action=button.action):
                     if datetime.now() < when: return
                     # Turn on static foreground for button.
                     left_statics = left.visit()[1:-1:2]
@@ -275,7 +275,7 @@ screen choice(items):
         def finish():
             global selected_choice
             selected_choice = None
-    on "show" action setup_dynamic_choices
+    on "show" action [SetVariable("selected_choice",None), setup_dynamic_choices]
     on "hide" action finish
 
 
