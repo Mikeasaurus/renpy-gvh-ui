@@ -12,7 +12,7 @@ transform menu_up:
 # x_align - alignment along x direction
 screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
     python:
-        # This functions are called when a button gets hovered / unhovered.
+        # These functions are called when a button gets hovered / unhovered.
         # Sets up the transformation of the central pointer, to slide towards
         # the hovered choice.
         def hovered_action (n,dx,dy):
@@ -36,34 +36,40 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
             selected_choice = None
             renpy.restart_interaction()
     # Normal choice button
-    if '->' not in i.caption and selected_choice != n:
+    if '->' not in i.caption:
         hbox:
             yalign 0.5 xalign x_align
-            image "leftmenubutton"
+            if selected_choice == n:
+                image "leftmenubuttonselected"
+            else:
+                image "leftmenubutton"
             frame:
-                background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                if selected_choice == n:
+                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                else:
+                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
                 textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            image "rightmenubutton"
-    # Selected choice
-    elif '->' not in i.caption and selected_choice == n:
-        hbox:
-            yalign 0.5 xalign x_align
-            image "leftmenubuttonselected"
-            frame:
-                background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            image "rightmenubuttonselected"
+            if selected_choice == n:
+                image "rightmenubuttonselected"
+            else:
+                image "rightmenubutton"
     # Button that statics out to other choice
     else:
         hbox:
             yalign 0.5 xalign x_align
             frame id "left_%d"%n:
                 xsize 38 ysize 75
-                background Frame(ImageReference("leftmenubutton"),ysize=75)
+                if selected_choice == n:
+                    background Frame(ImageReference("leftmenubuttonselected"),ysize=75)
+                else:
+                    background Frame(ImageReference("leftmenubutton"),ysize=75)
                 foreground Frame(ImageReference("leftmenubuttonstaticoff"),ysize=75)
                 null
             frame id "centre_%d"%n:
-                background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                if selected_choice == n:
+                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                else:
+                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
                 fixed:
                     fit_first True
                     # Use first textbutton as dummy to keep the right size.
@@ -79,7 +85,10 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
                 foreground Frame(ImageReference("centremenubuttonstaticoff"),tile=True,ysize=75)
             frame id "right_%d"%n:
                 xsize 38 ysize 75
-                background Frame(ImageReference("rightmenubutton"),ysize=75)
+                if selected_choice == n:
+                    background Frame(ImageReference("rightmenubuttonselected"),ysize=75)
+                else:
+                    background Frame(ImageReference("rightmenubutton"),ysize=75)
                 foreground Frame(ImageReference("rightmenubuttonstaticoff"),ysize=75)
                 null
 # Setting up the choice pointer.
@@ -253,8 +262,11 @@ screen choice(items):
                     # Update the text of the button.
                     button.child.text = [newtext]
                     button.child.update()
-                    # Turn off this static hover trigger (only run once).
-                    button.hovered = dummy_button.hovered
+                    # Use normal hover action after waiting for static.
+                    def do_hovered (when=datetime.now()+timedelta(seconds=1)):
+                        if datetime.now() >= when:
+                            return dummy_button.hovered()
+                    button.hovered = do_hovered
                     # Turn on action after waiting for static.
                     def do_action (when=datetime.now()+timedelta(seconds=1)):
                         if datetime.now() >= when:
