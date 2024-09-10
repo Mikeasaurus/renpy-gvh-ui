@@ -6,7 +6,21 @@ This just makes the choice menus styled more like the ones in GVH.  To use them:
 1. Copy the file `gvhchoice.rpy` into your game folder, and copy the folder `images/gvhchoice` into your `images` folder.
 2. Thats... really it.  Choice menus are called the same way as before.
 
-Only extra feature added so far: if you use an arrow `->` in your choice text, e.g. `Say something mean -> Chicken out`, it will put a button with the first text, but when the user tries to select it, it will static out to the second choice.
+Some special effects are available by adding some control characters to the choice text, for example:
+```renpy
+
+menu:
+    "Normal button":
+        # ...
+    "~ Wobbly button effect ~":
+        # ...
+    "/ Parallelogram button /":
+        # ...
+    "Fake choice that statics out -> Real choice":
+        # ...
+```
+
+More special effects are planned (just takes time to get them working in Ren'Py!).  Suggestions are welcome.
 
 ## Texting overlay
 

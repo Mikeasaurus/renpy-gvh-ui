@@ -35,26 +35,8 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
             choicepointer_dy2 = 0.0
             selected_choice = None
             renpy.restart_interaction()
-    # Normal choice button
-    if '->' not in i.caption:
-        hbox:
-            yalign 0.5 xalign x_align
-            if selected_choice == n:
-                image "leftmenubuttonselected"
-            else:
-                image "leftmenubutton"
-            frame:
-                if selected_choice == n:
-                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                else:
-                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            if selected_choice == n:
-                image "rightmenubuttonselected"
-            else:
-                image "rightmenubutton"
     # Button that statics out to other choice
-    else:
+    if '->' in i.caption:
         hbox:
             yalign 0.5 xalign x_align
             frame id "left_%d"%n:
@@ -91,6 +73,74 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
                     background Frame(ImageReference("rightmenubutton"),ysize=75)
                 foreground Frame(ImageReference("rightmenubuttonstaticoff"),ysize=75)
                 null
+    # Wobbly button
+    elif i.caption.startswith('~') and i.caption.endswith('~'):
+        hbox:
+            yalign 0.5 xalign x_align
+            if selected_choice == n:
+                image "leftmenubuttonwobbly selected"
+            else:
+                image "leftmenubuttonwobbly"
+            frame:
+                if selected_choice == n:
+                    background Frame(ImageReference("centremenubuttonwobbly selected"),tile="integer",ysize=79)
+                else:
+                    background Frame(ImageReference("centremenubuttonwobbly"),tile="integer",ysize=79)
+                textbutton i.caption.strip('~').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
+            if selected_choice == n:
+                image "rightmenubuttonwobbly selected"
+            else:
+                image "rightmenubuttonwobbly"
+    # Parallelogram button
+    elif i.caption.startswith('/') and i.caption.endswith('/'):
+        fixed:
+            yalign 0.5 xalign x_align
+            # Put wobbly parallelogram behind the text.
+            if selected_choice == n:
+                hbox:
+                    yalign 0.5 #xalign 0.5
+                    at oscillation
+                    image "leftmenubuttonpgramselected"
+                    frame:
+                        background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                        textbutton i.caption.strip('/').strip() text_size 40 text_color "#00000000"
+                    image "rightmenubuttonpgramselected"
+            hbox:
+                yalign 0.5
+                if selected_choice == n:
+                    image "leftmenubuttonpgram" alpha 0.0
+                else:
+                    image "leftmenubuttonpgram"
+                frame:
+                    if selected_choice == n:
+                        background None
+                        #background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                    else:
+                        background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                    textbutton i.caption.strip('/').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
+                if selected_choice == n:
+                    image "rightmenubuttonpgram" alpha 0.0
+                else:
+                    image "rightmenubuttonpgram"
+
+    # Normal choice button
+    else:
+        hbox:
+            yalign 0.5 xalign x_align
+            if selected_choice == n:
+                image "leftmenubuttonselected"
+            else:
+                image "leftmenubutton"
+            frame:
+                if selected_choice == n:
+                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                else:
+                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
+            if selected_choice == n:
+                image "rightmenubuttonselected"
+            else:
+                image "rightmenubutton"
 # Setting up the choice pointer.
 default choicepointer_dx1 = 0.0
 default choicepointer_dy1 = 0.0
@@ -373,3 +423,148 @@ image rightmenubuttonstaticfade:
     alpha 1.0
     "rightmenubuttonstatic"
     easeout 1.0 alpha 0.0
+image leftmenubuttonwobbly:
+    animation
+    "leftmenubuttonwobbly0"
+    pause 0.1
+    "leftmenubuttonwobbly1"
+    pause 0.1
+    "leftmenubuttonwobbly2"
+    pause 0.1
+    "leftmenubuttonwobbly3"
+    pause 0.1
+    "leftmenubuttonwobbly4"
+    pause 0.1
+    "leftmenubuttonwobbly5"
+    pause 0.1
+    "leftmenubuttonwobbly6"
+    pause 0.1
+    "leftmenubuttonwobbly7"
+    pause 0.1
+    "leftmenubuttonwobbly8"
+    pause 0.1
+    "leftmenubuttonwobbly9"
+    pause 0.1
+    repeat
+image centremenubuttonwobbly:
+    animation
+    "centremenubuttonwobbly0"
+    pause 0.1
+    "centremenubuttonwobbly1"
+    pause 0.1
+    "centremenubuttonwobbly2"
+    pause 0.1
+    "centremenubuttonwobbly3"
+    pause 0.1
+    "centremenubuttonwobbly4"
+    pause 0.1
+    "centremenubuttonwobbly5"
+    pause 0.1
+    "centremenubuttonwobbly6"
+    pause 0.1
+    "centremenubuttonwobbly7"
+    pause 0.1
+    "centremenubuttonwobbly8"
+    pause 0.1
+    "centremenubuttonwobbly9"
+    pause 0.1
+    repeat
+image rightmenubuttonwobbly:
+    animation
+    "rightmenubuttonwobbly0"
+    pause 0.1
+    "rightmenubuttonwobbly1"
+    pause 0.1
+    "rightmenubuttonwobbly2"
+    pause 0.1
+    "rightmenubuttonwobbly3"
+    pause 0.1
+    "rightmenubuttonwobbly4"
+    pause 0.1
+    "rightmenubuttonwobbly5"
+    pause 0.1
+    "rightmenubuttonwobbly6"
+    pause 0.1
+    "rightmenubuttonwobbly7"
+    pause 0.1
+    "rightmenubuttonwobbly8"
+    pause 0.1
+    "rightmenubuttonwobbly9"
+    pause 0.1
+    repeat
+image leftmenubuttonwobbly selected:
+    animation
+    "leftmenubuttonwobblyselected0"
+    pause 0.1
+    "leftmenubuttonwobblyselected1"
+    pause 0.1
+    "leftmenubuttonwobblyselected2"
+    pause 0.1
+    "leftmenubuttonwobblyselected3"
+    pause 0.1
+    "leftmenubuttonwobblyselected4"
+    pause 0.1
+    "leftmenubuttonwobblyselected5"
+    pause 0.1
+    "leftmenubuttonwobblyselected6"
+    pause 0.1
+    "leftmenubuttonwobblyselected7"
+    pause 0.1
+    "leftmenubuttonwobblyselected8"
+    pause 0.1
+    "leftmenubuttonwobblyselected9"
+    pause 0.1
+    repeat
+image centremenubuttonwobbly selected:
+    animation
+    "centremenubuttonwobblyselected0"
+    pause 0.1
+    "centremenubuttonwobblyselected1"
+    pause 0.1
+    "centremenubuttonwobblyselected2"
+    pause 0.1
+    "centremenubuttonwobblyselected3"
+    pause 0.1
+    "centremenubuttonwobblyselected4"
+    pause 0.1
+    "centremenubuttonwobblyselected5"
+    pause 0.1
+    "centremenubuttonwobblyselected6"
+    pause 0.1
+    "centremenubuttonwobblyselected7"
+    pause 0.1
+    "centremenubuttonwobblyselected8"
+    pause 0.1
+    "centremenubuttonwobblyselected9"
+    pause 0.1
+    repeat
+image rightmenubuttonwobbly selected:
+    animation
+    "rightmenubuttonwobblyselected0"
+    pause 0.1
+    "rightmenubuttonwobblyselected1"
+    pause 0.1
+    "rightmenubuttonwobblyselected2"
+    pause 0.1
+    "rightmenubuttonwobblyselected3"
+    pause 0.1
+    "rightmenubuttonwobblyselected4"
+    pause 0.1
+    "rightmenubuttonwobblyselected5"
+    pause 0.1
+    "rightmenubuttonwobblyselected6"
+    pause 0.1
+    "rightmenubuttonwobblyselected7"
+    pause 0.1
+    "rightmenubuttonwobblyselected8"
+    pause 0.1
+    "rightmenubuttonwobblyselected9"
+    pause 0.1
+    repeat
+transform oscillation:
+    rotate 0.0
+    easein 1.0 rotate -10.0
+    easeout 1.0 rotate 0.0
+    easein 1.0 rotate 10.0
+    easeout 1.0 rotate 0.0
+    repeat
