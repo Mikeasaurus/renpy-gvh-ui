@@ -94,9 +94,21 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
     # Parallelogram button
     elif i.caption.startswith('/') and i.caption.endswith('/'):
         fixed:
+            fit_first True
             yalign 0.5 xalign x_align
             # Put wobbly parallelogram behind the text.
             if selected_choice == n:
+                ###
+                # Dummy button layout for fit_first.
+                # Would be nice if there was a "fit_last".
+                hbox:
+                    yalign 0.5
+                    image "leftmenubuttonpgram" alpha 0.0
+                    frame:
+                        background None
+                        textbutton i.caption.strip('/').strip() text_size 40 text_color "#00000000" text_hover_color "#00000000"
+                    image "rightmenubuttonpgram" alpha 0.0
+                ###
                 hbox:
                     yalign 0.5 #xalign 0.5
                     at oscillation
@@ -122,7 +134,69 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
                     image "rightmenubuttonpgram" alpha 0.0
                 else:
                     image "rightmenubuttonpgram"
-
+    # Pulsing button
+    elif i.caption.startswith('((') and i.caption.endswith('))'):
+        fixed:
+            fit_first True
+            yalign 0.5 xalign x_align
+            # Put pulsing button behind the text.
+            if selected_choice == n:
+                ###
+                # Dummy button layout for fit_first.
+                # Would be nice if there was a "fit_last".
+                hbox:
+                    yalign 0.5
+                    image "leftmenubutton" alpha 0.0
+                    frame:
+                        background None
+                        textbutton i.caption.lstrip('(').rstrip(')').strip() text_size 40 text_color "#00000000" text_hover_color "#00000000"
+                    image "rightmenubutton" alpha 0.0
+                ###
+                hbox:
+                    yalign 0.5 #xalign 0.5
+                    at thumping
+                    image "leftmenubuttonselected"
+                    frame:
+                        background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                        textbutton i.caption.lstrip('(').rstrip(')').strip() text_size 40 text_color "#00000000"
+                    image "rightmenubuttonselected"
+            hbox:
+                yalign 0.5
+                if selected_choice == n:
+                    image "leftmenubutton" alpha 0.0
+                else:
+                    image "leftmenubutton"
+                frame:
+                    if selected_choice == n:
+                        background None
+                        #background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                    else:
+                        background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                    textbutton i.caption.lstrip('(').rstrip(')').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
+                if selected_choice == n:
+                    image "rightmenubutton" alpha 0.0
+                else:
+                    image "rightmenubutton"
+    # Sparkly button
+    elif i.caption.startswith('*') and i.caption.endswith('*'):
+        hbox:
+            yalign 0.5 xalign x_align
+            if selected_choice == n:
+                image "leftmenubuttonselected"
+            else:
+                image "leftmenubutton"
+            frame:
+                # Add sparkle / bubble effect.
+                foreground Frame(ImageReference("centremenubuttonsparkly animated"),tile=True,ysize=75)
+                if selected_choice == n:
+                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
+                else:
+                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
+                textbutton i.caption.strip('*').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
+            if selected_choice == n:
+                image "rightmenubuttonselected"
+            else:
+                image "rightmenubutton"
     # Normal choice button
     else:
         hbox:
@@ -563,8 +637,21 @@ image rightmenubuttonwobbly selected:
     repeat
 transform oscillation:
     rotate 0.0
-    easein 1.0 rotate -10.0
-    easeout 1.0 rotate 0.0
-    easein 1.0 rotate 10.0
-    easeout 1.0 rotate 0.0
+    easein 0.5 rotate -10.0
+    easeout 0.5 rotate 0.0
+    easein 0.5 rotate 10.0
+    easeout 0.5 rotate 0.0
+    repeat
+transform thumping:
+    xalign 0.5
+    easeout 0.1 zoom 1.4
+    easein 0.1 zoom 1.0
+    pause 0.2
+    repeat
+
+image centremenubuttonsparkly animated:
+    "centremenubuttonsparkly"
+    xalign 0.5 yalign 0.5
+    crop (0,0,300,75)
+    linear 10.0 crop (0,299,300,75)
     repeat
