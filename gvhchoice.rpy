@@ -3,14 +3,78 @@ transform menu_up:
     ypos 1.0 alpha 0.0
     easein 0.3 ypos 0.8 alpha 1.0
 
+# Internal state of buttons.
+# Contains some integer value, starting at zero.
+# The context depends on the type of button.
+default choice_state = [0]*100
+# For some buttons, need a timer to indicate when an action can be perfomed.
+default choice_timer = [None]*100
+
+# Internal layout of choice buttons.
+# Using this as a template, to cut down on the amount of copy/pasted layout
+# in the choicebutton screen.
+screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hovered, choice_unhovered, fit_type=None, fit_text=None, button_transform=None, choice_ysize=75, fg=None, bg_tile="integer"):
+    fixed:
+        fit_first True
+        yalign 0.5
+        # Invisible copy of button for forcing a certain layout.
+        if fit_type is not None:
+            ###
+            # Dummy button layout for arranging the space for the button.
+            # Requires fit_first to be turned on.
+            hbox:
+                yalign 0.5
+                image "leftmenubutton%s"%(fit_type or choice_type) alpha 0.0
+                frame:
+                    background None
+                    textbutton "%s"%(fit_text or choice_text) text_size 40 text_color "#00000000" text_hover_color "#00000000"
+                image "rightmenubutton%s"%(fit_type or choice_type) alpha 0.0
+        # Transformed background button
+        if button_transform is not None:
+            hbox:
+                yalign 0.5
+                at button_transform
+                image "leftmenubutton%s"%choice_type
+                frame:
+                    background Frame(ImageReference("centremenubutton%s"%choice_type),tile="integer",ysize=choice_ysize)
+                    textbutton "%s"%(fit_text or choice_text) text_size 40 text_color "#00000000" text_hover_color "#00000000"
+                image "rightmenubutton%s"%choice_type
+        # The main button.
+        # Contains the text, and the background if no transform is applied.
+        hbox:
+            yalign 0.5
+            if button_transform is not None:
+                image "leftmenubutton%s"%choice_type alpha 0.0
+            else:
+                image "leftmenubutton%s"%choice_type
+            frame:
+                if button_transform is not None:
+                    background None
+                else:
+                    foreground Frame(ImageReference(fg),tile=True,ysize=choice_ysize)
+                    background Frame(ImageReference("centremenubutton%s"%choice_type),tile=bg_tile,ysize=choice_ysize)
+                # Special case: use some other text to define the size.
+                # Make it an invisible copy, and apply fit_first to it.
+                if fit_text is not None:
+                    fixed:
+                        fit_first True
+                        textbutton fit_text text_size 40 text_color "#00000000" text_hover_color "#00000000"
+                        textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                else:
+                    textbutton choice_text action choice_action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+            if button_transform is not None:
+                image "rightmenubutton%s"%choice_type alpha 0.0
+            else:
+                image "rightmenubutton%s"%choice_type
+
+
 # Choice buttons are set up in a separate screen, to make it easier to place them
 # in different layouts without copying / pasting a bunch of code.
 # Inputs:
 # n - index of choice (for labelling)
 # i - choice item
 # dx, dy - direction to point the central circle thing to indicate selection.
-# x_align - alignment along x direction
-screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
+screen choicebutton(n,i,dx=0.0,dy=0.0):
     python:
         # These functions are called when a button gets hovered / unhovered.
         # Sets up the transformation of the central pointer, to slide towards
@@ -35,186 +99,86 @@ screen choicebutton(n,i,dx=0.0,dy=0.0,x_align=0.5):
             choicepointer_dy2 = 0.0
             selected_choice = None
             renpy.restart_interaction()
+        # Increment choice state for multi-stage buttons.
+        def inc_state (n):
+            global choice_state
+            choice_state[n] += 1
+            renpy.restart_interaction()
+        # Action that does nothing.  For buttons that are disabled, but still need
+        # hover actions to work.  Putting action of None seems to disable hover,
+        # so this will keep hover working?
+        def do_nothing ():
+            return
+        # Action that sets a timer to delay further action.
+        # Works in conjunction with delayed_action.
+        def set_delay (delay,n=n):
+            def f(n=n,delay=delay):
+                from datetime import datetime, timedelta
+                timer = datetime.now()+timedelta(seconds=delay)
+                choice_timer[n] = timer
+            return f
+        # Conditional action, if a time has been reached.
+        def delayed_action (action_,n=n):
+            def f(n=n,action_=action_):
+                from datetime import datetime, timedelta
+                if choice_timer[n] is not None and datetime.now() > choice_timer[n]:
+                    return action_()
+            return f
+    default hovered_ = Function(hovered_action,n,dx,dy)
+    default unhovered_ = unhovered_action
+    default inc_state_ = Function(inc_state,n)
     # Button that statics out to other choice
     if '->' in i.caption:
-        hbox:
-            yalign 0.5 xalign x_align
-            frame id "left_%d"%n:
-                xsize 38 ysize 75
+        default caption1 = i.caption.split('->')[0].strip()
+        default caption2 = i.caption.split('->')[1].strip()
+        # First, present normal-looking button with some initial choice text.
+        if choice_state[n] == 0:
+            use choicebutton_internal("", caption1, i.action, [hovered_,inc_state_,set_delay(1.0)], unhovered_)
+        # After getting hovered, show a staticky button
+        elif choice_state[n] == 1:
+            fixed:
+                fit_first True
+                # Normal button in the back.
                 if selected_choice == n:
-                    background Frame(ImageReference("leftmenubuttonselected"),ysize=75)
+                    use choicebutton_internal("selected", caption2, delayed_action(i.action), hovered_, unhovered_, fit_text=caption1)
                 else:
-                    background Frame(ImageReference("leftmenubutton"),ysize=75)
-                foreground Frame(ImageReference("leftmenubuttonstaticoff"),ysize=75)
-                null
-            frame id "centre_%d"%n:
-                if selected_choice == n:
-                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                else:
-                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                fixed:
-                    fit_first True
-                    # Use first textbutton as dummy to keep the right size.
-                    # Also store the usual hovered / unhovered actions here.
-                    textbutton '{alpha=0.0}'+i.caption.split('->')[0].strip()+'{/alpha}' text_size 40 hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-                    # Can't put the 'hovered' and 'unhovered' attributes in here, otherwise it
-                    # won't let them change later (will keep calling the same function even though
-                    # it was changed in the object)
-                    # However, if those attributes are left out here, then they can be dynamically
-                    # added later, and even changing them again later works fine???
-                    # WTF, Ren'Py.
-                    textbutton i.caption action i.action text_size 40 xalign 0.5 text_color "#777777" text_hover_color "#ffffff"
-                foreground Frame(ImageReference("centremenubuttonstaticoff"),tile=True,ysize=75)
-            frame id "right_%d"%n:
-                xsize 38 ysize 75
-                if selected_choice == n:
-                    background Frame(ImageReference("rightmenubuttonselected"),ysize=75)
-                else:
-                    background Frame(ImageReference("rightmenubutton"),ysize=75)
-                foreground Frame(ImageReference("rightmenubuttonstaticoff"),ysize=75)
-                null
+                    use choicebutton_internal("", caption2, delayed_action(i.action), hovered_, unhovered_, fit_text=caption1)
+                # Staticky button in front.
+                use choicebutton_internal("staticfade", "{alpha=0.0}"+caption1+"{/alpha}", None, hovered_, unhovered_, bg_tile=True)
     # Wobbly button
     elif i.caption.startswith('~') and i.caption.endswith('~'):
-        hbox:
-            yalign 0.5 xalign x_align
-            if selected_choice == n:
-                image "leftmenubuttonwobbly selected"
-            else:
-                image "leftmenubuttonwobbly"
-            frame:
-                if selected_choice == n:
-                    background Frame(ImageReference("centremenubuttonwobbly selected"),tile="integer",ysize=79)
-                else:
-                    background Frame(ImageReference("centremenubuttonwobbly"),tile="integer",ysize=79)
-                textbutton i.caption.strip('~').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            if selected_choice == n:
-                image "rightmenubuttonwobbly selected"
-            else:
-                image "rightmenubuttonwobbly"
+        default caption = i.caption.strip('~').strip()
+        if selected_choice == n:
+            use choicebutton_internal("wobblyselected", caption, i.action, hovered_, unhovered_, choice_ysize=79)
+        else:
+            use choicebutton_internal("wobbly", caption, i.action, hovered_, unhovered_, choice_ysize=79)
     # Parallelogram button
     elif i.caption.startswith('/') and i.caption.endswith('/'):
-        fixed:
-            fit_first True
-            yalign 0.5 xalign x_align
-            # Put wobbly parallelogram behind the text.
-            if selected_choice == n:
-                ###
-                # Dummy button layout for fit_first.
-                # Would be nice if there was a "fit_last".
-                hbox:
-                    yalign 0.5
-                    image "leftmenubuttonpgram" alpha 0.0
-                    frame:
-                        background None
-                        textbutton i.caption.strip('/').strip() text_size 40 text_color "#00000000" text_hover_color "#00000000"
-                    image "rightmenubuttonpgram" alpha 0.0
-                ###
-                hbox:
-                    yalign 0.5 #xalign 0.5
-                    at oscillation
-                    image "leftmenubuttonpgramselected"
-                    frame:
-                        background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                        textbutton i.caption.strip('/').strip() text_size 40 text_color "#00000000"
-                    image "rightmenubuttonpgramselected"
-            hbox:
-                yalign 0.5
-                if selected_choice == n:
-                    image "leftmenubuttonpgram" alpha 0.0
-                else:
-                    image "leftmenubuttonpgram"
-                frame:
-                    if selected_choice == n:
-                        background None
-                        #background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                    else:
-                        background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                    textbutton i.caption.strip('/').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-                if selected_choice == n:
-                    image "rightmenubuttonpgram" alpha 0.0
-                else:
-                    image "rightmenubuttonpgram"
+        default caption = i.caption.strip('/').strip()
+        if selected_choice == n:
+            use choicebutton_internal("pgramselected", caption, i.action, hovered_, unhovered_, button_transform=oscillation, fit_type="pgram")
+        else:
+            use choicebutton_internal("pgram", caption, i.action, hovered_, unhovered_)
     # Pulsing button
     elif i.caption.startswith('((') and i.caption.endswith('))'):
-        fixed:
-            fit_first True
-            yalign 0.5 xalign x_align
-            # Put pulsing button behind the text.
-            if selected_choice == n:
-                ###
-                # Dummy button layout for fit_first.
-                # Would be nice if there was a "fit_last".
-                hbox:
-                    yalign 0.5
-                    image "leftmenubutton" alpha 0.0
-                    frame:
-                        background None
-                        textbutton i.caption.lstrip('(').rstrip(')').strip() text_size 40 text_color "#00000000" text_hover_color "#00000000"
-                    image "rightmenubutton" alpha 0.0
-                ###
-                hbox:
-                    yalign 0.5 #xalign 0.5
-                    at thumping
-                    image "leftmenubuttonselected"
-                    frame:
-                        background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                        textbutton i.caption.lstrip('(').rstrip(')').strip() text_size 40 text_color "#00000000"
-                    image "rightmenubuttonselected"
-            hbox:
-                yalign 0.5
-                if selected_choice == n:
-                    image "leftmenubutton" alpha 0.0
-                else:
-                    image "leftmenubutton"
-                frame:
-                    if selected_choice == n:
-                        background None
-                        #background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                    else:
-                        background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                    textbutton i.caption.lstrip('(').rstrip(')').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-                if selected_choice == n:
-                    image "rightmenubutton" alpha 0.0
-                else:
-                    image "rightmenubutton"
+        default caption = i.caption.lstrip('(').rstrip(')').strip()
+        if selected_choice == n:
+            use choicebutton_internal("selected", caption, i.action, hovered_, unhovered_, button_transform=thumping, fit_type="")
+        else:
+            use choicebutton_internal("", caption, i.action, hovered_, unhovered_)
     # Sparkly button
     elif i.caption.startswith('*') and i.caption.endswith('*'):
-        hbox:
-            yalign 0.5 xalign x_align
-            if selected_choice == n:
-                image "leftmenubuttonselected"
-            else:
-                image "leftmenubutton"
-            frame:
-                # Add sparkle / bubble effect.
-                foreground Frame(ImageReference("centremenubuttonsparkly animated"),tile=True,ysize=75)
-                if selected_choice == n:
-                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                else:
-                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                textbutton i.caption.strip('*').strip() action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            if selected_choice == n:
-                image "rightmenubuttonselected"
-            else:
-                image "rightmenubutton"
-    # Normal choice button
+        default caption = i.caption.strip('*').strip()
+        if selected_choice == n:
+            use choicebutton_internal("selected", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
+        else:
+            use choicebutton_internal("", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
+    # Normal button
     else:
-        hbox:
-            yalign 0.5 xalign x_align
-            if selected_choice == n:
-                image "leftmenubuttonselected"
-            else:
-                image "leftmenubutton"
-            frame:
-                if selected_choice == n:
-                    background Frame(ImageReference("centremenubuttonselected"),tile="integer",ysize=75)
-                else:
-                    background Frame(ImageReference("centremenubutton"),tile="integer",ysize=75)
-                textbutton i.caption action i.action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered Function(hovered_action,n,dx,dy) unhovered unhovered_action
-            if selected_choice == n:
-                image "rightmenubuttonselected"
-            else:
-                image "rightmenubutton"
+        if selected_choice == n:
+            use choicebutton_internal("selected", i.caption, i.action, hovered_, unhovered_)
+        else:
+            use choicebutton_internal("", i.caption, i.action, hovered_, unhovered_)
 # Setting up the choice pointer.
 default choicepointer_dx1 = 0.0
 default choicepointer_dy1 = 0.0
@@ -352,68 +316,14 @@ screen choice(items):
                 for n,i in enumerate(items):
                     use choicebutton(n,i)
     python:
-        def setup_dynamic_choices():
-            from datetime import datetime, timedelta
-            s = renpy.get_screen('choice')
-            assert s is not None
-            for n in range(10):
-                left = renpy.get_widget(s,id='left_%d'%n)
-                if left is None: continue
-                centre = renpy.get_widget(s,id='centre_%d'%n)
-                right = renpy.get_widget(s,id='right_%d'%n)
-                fixed = centre.visit()[-1]
-                # First button holds hovered / unhovered actions.
-                # Copy them to second (main) button because that one takes
-                # precedent for mouse actions.
-                dummy_button = fixed.visit()[0]
-                button = fixed.visit()[-1]
-                oldtext, newtext = button.child.text[0].split('->')
-                def do_static (when=datetime.now()+timedelta(seconds=0.5),left=left,centre=centre,right=right,dummy_button=dummy_button,button=button,newtext=newtext,action=button.action):
-                    if datetime.now() < when: return
-                    # Turn on static foreground for button.
-                    left_statics = left.visit()[1:-1:2]
-                    centre_statics = centre.visit()[1:-1:2]
-                    right_statics = right.visit()[1:-1:2]
-                    for x in left_statics:
-                        x.image = ImageReference("leftmenubuttonstaticfade")
-                    left.update()
-                    for x in centre_statics:
-                        x.image = ImageReference("centremenubuttonstaticfade")
-                    centre.update()
-                    for x in right_statics:
-                        x.image = ImageReference("rightmenubuttonstaticfade")
-                    right.update()
-                    # Update the text of the button.
-                    button.child.text = [newtext]
-                    button.child.update()
-                    # Use normal hover action after waiting for static.
-                    def do_hovered (when=datetime.now()+timedelta(seconds=1)):
-                        if datetime.now() >= when:
-                            return dummy_button.hovered()
-                    button.hovered = do_hovered
-                    # Turn on action after waiting for static.
-                    def do_action (when=datetime.now()+timedelta(seconds=1)):
-                        if datetime.now() >= when:
-                            return action()
-                    # Why is it that I need to set the 'clicked' attribute here
-                    # to turn on an action, but I need to set the 'action'
-                    # attribute to disable the button from outside this function?
-                    button.clicked = do_action
-                    button.action = do_action
-                def do_nothing (): pass
-                # Set hover trigger to turn on static and morph into final form.
-                button.hovered = do_static
-                button.unhovered = dummy_button.unhovered
-                button.action = do_nothing
-                button.child.text = [oldtext.strip()]
-        # Reset any state after the screen is done, so it behaves properly
-        # for the next time it's shown.
-        def finish():
-            global selected_choice
+        # Set up choice button state.
+        def start():
+            global selected_choice, choice_state, choice_timer
             selected_choice = None
-    on "show" action [SetVariable("selected_choice",None), setup_dynamic_choices]
-    on "hide" action finish
-
+            choice_state = [0]*100
+            choice_timer = [None]*100
+    on "show" action start
+    
 
 # Staticky buttons
 image leftmenubuttonstatic:
@@ -566,7 +476,7 @@ image rightmenubuttonwobbly:
     "rightmenubuttonwobbly9"
     pause 0.1
     repeat
-image leftmenubuttonwobbly selected:
+image leftmenubuttonwobblyselected:
     animation
     "leftmenubuttonwobblyselected0"
     pause 0.1
@@ -589,7 +499,7 @@ image leftmenubuttonwobbly selected:
     "leftmenubuttonwobblyselected9"
     pause 0.1
     repeat
-image centremenubuttonwobbly selected:
+image centremenubuttonwobblyselected:
     animation
     "centremenubuttonwobblyselected0"
     pause 0.1
@@ -612,7 +522,7 @@ image centremenubuttonwobbly selected:
     "centremenubuttonwobblyselected9"
     pause 0.1
     repeat
-image rightmenubuttonwobbly selected:
+image rightmenubuttonwobblyselected:
     animation
     "rightmenubuttonwobblyselected0"
     pause 0.1
@@ -648,10 +558,15 @@ transform thumping:
     easein 0.1 zoom 1.0
     pause 0.2
     repeat
-
 image centremenubuttonsparkly animated:
+    animation
     "centremenubuttonsparkly"
     xalign 0.5 yalign 0.5
     crop (0,0,300,75)
     linear 10.0 crop (0,299,300,75)
     repeat
+# Parallelogram button uses same middle section as normal button.
+image centremenubuttonpgram:
+    "centremenubutton"
+image centremenubuttonpgramselected:
+    "centremenubuttonselected"
