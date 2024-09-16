@@ -23,7 +23,7 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
             # Dummy button layout for arranging the space for the button.
             # Requires fit_first to be turned on.
             hbox:
-                yalign 0.5
+                yalign 0.5 xalign 0.5
                 image "leftmenubutton%s"%(fit_type or choice_type) alpha 0.0
                 frame:
                     background None
@@ -32,7 +32,7 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
         # Transformed background button
         if button_transform is not None:
             hbox:
-                yalign 0.5
+                yalign 0.5 xalign 0.5
                 at button_transform
                 image "leftmenubutton%s"%choice_type
                 frame:
@@ -42,7 +42,7 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
         # The main button.
         # Contains the text, and the background if no transform is applied.
         hbox:
-            yalign 0.5
+            yalign 0.5 xalign 0.5
             if button_transform is not None:
                 image "leftmenubutton%s"%choice_type alpha 0.0
             else:
@@ -61,7 +61,10 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
                         textbutton fit_text text_size 40 text_color "#00000000" text_hover_color "#00000000"
                         textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
                 else:
-                    textbutton choice_text action choice_action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                    # Some questionable stuff to get vertical alignment of text consistent.
+                    vbox:
+                        null height (choice_ysize-75)/2
+                        textbutton choice_text action choice_action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
             if button_transform is not None:
                 image "rightmenubutton%s"%choice_type alpha 0.0
             else:
@@ -173,6 +176,13 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
             use choicebutton_internal("selected", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
         else:
             use choicebutton_internal("", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
+    # Spikey button
+    elif i.caption.startswith('^') and i.caption.endswith('^'):
+        default caption = i.caption.strip('^').strip()
+        if selected_choice == n:
+            use choicebutton_internal("spikeyselected", caption, i.action, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
+        else:
+            use choicebutton_internal("spikeyunselected", caption, i.action, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
     # Normal button
     else:
         if selected_choice == n:
@@ -570,3 +580,105 @@ image centremenubuttonpgram:
     "centremenubutton"
 image centremenubuttonpgramselected:
     "centremenubuttonselected"
+image leftmenubuttonspikeyselected:
+    "leftmenubuttonspikeyselected1"
+    pause 0.02
+    "leftmenubuttonspikeyselected2"
+    pause 0.02
+    "leftmenubuttonspikeyselected3"
+    pause 0.02
+    "leftmenubuttonspikeyselected4"
+    pause 0.02
+    "leftmenubuttonspikeyselected5"
+    pause 0.02
+    "leftmenubuttonspikeyselected6"
+    pause 0.02
+    "leftmenubuttonspikeyselected7"
+    pause 0.02
+    "leftmenubuttonspikeyselected8"
+    pause 0.02
+    "leftmenubuttonspikeyselected9"
+    pause 0.02
+image centremenubuttonspikeyselected:
+    "centremenubuttonspikeyselected1"
+    pause 0.02
+    "centremenubuttonspikeyselected2"
+    pause 0.02
+    "centremenubuttonspikeyselected3"
+    pause 0.02
+    "centremenubuttonspikeyselected4"
+    pause 0.02
+    "centremenubuttonspikeyselected5"
+    pause 0.02
+    "centremenubuttonspikeyselected6"
+    pause 0.02
+    "centremenubuttonspikeyselected7"
+    pause 0.02
+    "centremenubuttonspikeyselected8"
+    pause 0.02
+    "centremenubuttonspikeyselected9"
+    pause 0.02
+image rightmenubuttonspikeyselected:
+    "rightmenubuttonspikeyselected1"
+    pause 0.02
+    "rightmenubuttonspikeyselected2"
+    pause 0.02
+    "rightmenubuttonspikeyselected3"
+    pause 0.02
+    "rightmenubuttonspikeyselected4"
+    pause 0.02
+    "rightmenubuttonspikeyselected5"
+    pause 0.02
+    "rightmenubuttonspikeyselected6"
+    pause 0.02
+    "rightmenubuttonspikeyselected7"
+    pause 0.02
+    "rightmenubuttonspikeyselected8"
+    pause 0.02
+    "rightmenubuttonspikeyselected9"
+    pause 0.02
+image leftmenubuttonspikeyunselected:
+    "leftmenubuttonspikey7"
+    pause 0.05
+    "leftmenubuttonspikey6"
+    pause 0.02
+    "leftmenubuttonspikey5"
+    pause 0.02
+    "leftmenubuttonspikey4"
+    pause 0.02
+    "leftmenubuttonspikey3"
+    pause 0.02
+    "leftmenubuttonspikey2"
+    pause 0.02
+    "leftmenubuttonspikey1"
+    pause 0.02
+image centremenubuttonspikeyunselected:
+    "centremenubuttonspikey7"
+    pause 0.05
+    "centremenubuttonspikey6"
+    pause 0.02
+    "centremenubuttonspikey5"
+    pause 0.02
+    "centremenubuttonspikey4"
+    pause 0.02
+    "centremenubuttonspikey3"
+    pause 0.02
+    "centremenubuttonspikey2"
+    pause 0.02
+    "centremenubuttonspikey1"
+    pause 0.02
+image rightmenubuttonspikeyunselected:
+    "rightmenubuttonspikey7"
+    pause 0.05
+    "rightmenubuttonspikey6"
+    pause 0.02
+    "rightmenubuttonspikey5"
+    pause 0.02
+    "rightmenubuttonspikey4"
+    pause 0.02
+    "rightmenubuttonspikey3"
+    pause 0.02
+    "rightmenubuttonspikey2"
+    pause 0.02
+    "rightmenubuttonspikey1"
+    pause 0.02
