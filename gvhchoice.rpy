@@ -15,7 +15,7 @@ default action_queue = None
 # Internal layout of choice buttons.
 # Using this as a template, to cut down on the amount of copy/pasted layout
 # in the choicebutton screen.
-screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hovered, choice_unhovered, fit_type=None, fit_text=None, button_transform=None, choice_ysize=75, fg=None, bg_tile="integer"):
+screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hovered, choice_unhovered, fit_type=None, fit_text=None, button_transform=None, choice_ysize=75, fg=None, bg_tile="integer", textcolor="#777777"):
     fixed:
         fit_first True
         yalign 0.5
@@ -62,12 +62,12 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
                     fixed:
                         fit_first True
                         textbutton fit_text text_size 40 text_color "#00000000" text_hover_color "#00000000"
-                        textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color "#ffffff" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                        textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color textcolor text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
                 else:
                     # Some questionable stuff to get vertical alignment of text consistent.
                     vbox:
                         null height (choice_ysize-75)/2
-                        textbutton choice_text action choice_action text_size 40 text_color "#ffffff" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                        textbutton choice_text action choice_action text_size 40 text_color textcolor text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
             if button_transform is not None:
                 image "rightmenubutton%s"%choice_type alpha 0.0
             else:
