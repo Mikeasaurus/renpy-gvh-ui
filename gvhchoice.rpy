@@ -175,7 +175,7 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
                 fit_first True
                 # Normal button in the back.
                 if selected_choice == n:
-                    use choicebutton_internal("selected", caption2, delayed_action(clicked), hovered_, unhovered_, fit_text=caption1)
+                    use choicebutton_internal("selected", caption2, delayed_action(clicked), hovered_, unhovered_, fit_text=caption1, textcolor="#ffffff")
                 else:
                     use choicebutton_internal("", caption2, delayed_action(clicked), hovered_, unhovered_, fit_text=caption1)
                 # Staticky button in front.
