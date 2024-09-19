@@ -9,6 +9,8 @@ transform menu_up:
 default choice_state = [0]*100
 # For some buttons, need a timer to indicate when an action can be perfomed.
 default choice_timer = [None]*100
+# Queue up an action to perform after ending animation.
+default action_queue = None
 
 # Internal layout of choice buttons.
 # Using this as a template, to cut down on the amount of copy/pasted layout
@@ -51,7 +53,8 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
                 if button_transform is not None:
                     background None
                 else:
-                    foreground Frame(ImageReference(fg),tile=True,ysize=choice_ysize)
+                    if fg is not None:
+                        foreground Frame(ImageReference(fg),tile=True,ysize=choice_ysize)
                     background Frame(ImageReference("centremenubutton%s"%choice_type),tile=bg_tile,ysize=choice_ysize)
                 # Special case: use some other text to define the size.
                 # Make it an invisible copy, and apply fit_first to it.
@@ -59,12 +62,12 @@ screen choicebutton_internal(choice_type, choice_text, choice_action, choice_hov
                     fixed:
                         fit_first True
                         textbutton fit_text text_size 40 text_color "#00000000" text_hover_color "#00000000"
-                        textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                        textbutton choice_text action choice_action text_size 40 xalign 0.5 text_color "#ffffff" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
                 else:
                     # Some questionable stuff to get vertical alignment of text consistent.
                     vbox:
                         null height (choice_ysize-75)/2
-                        textbutton choice_text action choice_action text_size 40 text_color "#777777" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
+                        textbutton choice_text action choice_action text_size 40 text_color "#ffffff" text_hover_color "#ffffff" hovered choice_hovered unhovered choice_unhovered
             if button_transform is not None:
                 image "rightmenubutton%s"%choice_type alpha 0.0
             else:
@@ -86,21 +89,44 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
             global choicepointer_dx1, choicepointer_dy1
             global choicepointer_dx2, choicepointer_dy2
             global selected_choice
-            choicepointer_dx1 = choicepointer_dx2
-            choicepointer_dy1 = choicepointer_dy2
-            choicepointer_dx2 = dx
-            choicepointer_dy2 = dy
+            # Don't hover something else if something was clicked and we're
+            # in the end-of-screen fadeout animation.
+            if action_queue is not None: return
+            # Under some conditions this seems to get called twice on a button.
+            # Seems to happen for instance for buttons that have a transform
+            # effect applied on hover.
+            # Avoid double-setting this or it snaps the pointer instantly
+            # instead of sliding.
+            if dx != choicepointer_dx2 or dy != choicepointer_dy2:
+                choicepointer_dx1 = choicepointer_dx2
+                choicepointer_dy1 = choicepointer_dy2
+                choicepointer_dx2 = dx
+                choicepointer_dy2 = dy
             selected_choice = n
             renpy.restart_interaction()
         def unhovered_action ():
             global choicepointer_dx1, choicepointer_dy1
             global choicepointer_dx2, choicepointer_dy2
             global selected_choice
+            # Don't unhover if something was already clicked.
+            if action_queue is not None: return
             choicepointer_dx1 = choicepointer_dx2
             choicepointer_dy1 = choicepointer_dy2
             choicepointer_dx2 = 0.0
             choicepointer_dy2 = 0.0
             selected_choice = None
+            renpy.restart_interaction()
+        # Make the click response wait for an animation before returning from
+        # this screen.
+        def clicked (i=i):
+            # Can't pause and then call the action here directly, because Ren'Py
+            # "Cannot start an interaction in the middle of an interaction"...
+            # so this kludge sets up the action to be called as part of the screen
+            # setup.
+            global action_queue
+            # If an action was already clicked, then can't click again.
+            if action_queue is not None: return
+            action_queue = i.action
             renpy.restart_interaction()
         # Increment choice state for multi-stage buttons.
         def inc_state (n):
@@ -134,61 +160,103 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
     if '->' in i.caption:
         default caption1 = i.caption.split('->')[0].strip()
         default caption2 = i.caption.split('->')[1].strip()
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("outline", caption2, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, fit_type="", fit_text=caption1)
         # First, present normal-looking button with some initial choice text.
-        if choice_state[n] == 0:
-            use choicebutton_internal("", caption1, i.action, [hovered_,inc_state_,set_delay(1.0)], unhovered_)
+        elif choice_state[n] == 0:
+            use choicebutton_internal("", caption1, do_nothing, [hovered_,inc_state_,set_delay(1.0)], unhovered_)
         # After getting hovered, show a staticky button
         elif choice_state[n] == 1:
             fixed:
                 fit_first True
                 # Normal button in the back.
                 if selected_choice == n:
-                    use choicebutton_internal("selected", caption2, delayed_action(i.action), hovered_, unhovered_, fit_text=caption1)
+                    use choicebutton_internal("selected", caption2, delayed_action(clicked), hovered_, unhovered_, fit_text=caption1)
                 else:
-                    use choicebutton_internal("", caption2, delayed_action(i.action), hovered_, unhovered_, fit_text=caption1)
+                    use choicebutton_internal("", caption2, delayed_action(clicked), hovered_, unhovered_, fit_text=caption1)
                 # Staticky button in front.
                 use choicebutton_internal("staticfade", "{alpha=0.0}"+caption1+"{/alpha}", None, hovered_, unhovered_, bg_tile=True)
     # Wobbly button
     elif i.caption.startswith('~') and i.caption.endswith('~'):
         default caption = i.caption.strip('~').strip()
-        if selected_choice == n:
-            use choicebutton_internal("wobblyselected", caption, i.action, hovered_, unhovered_, choice_ysize=79)
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("wobblyoutline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, choice_ysize=79, fit_type="wobbly")
+        elif selected_choice == n:
+            use choicebutton_internal("wobblyselected", caption, clicked, hovered_, unhovered_, choice_ysize=79)
         else:
-            use choicebutton_internal("wobbly", caption, i.action, hovered_, unhovered_, choice_ysize=79)
+            use choicebutton_internal("wobbly", caption, clicked, hovered_, unhovered_, choice_ysize=79)
     # Parallelogram button
     elif i.caption.startswith('/') and i.caption.endswith('/'):
         default caption = i.caption.strip('/').strip()
-        if selected_choice == n:
-            use choicebutton_internal("pgramselected", caption, i.action, hovered_, unhovered_, button_transform=oscillation, fit_type="pgram")
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("pgramoutline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, fit_type="pgram")
+        elif selected_choice == n:
+            use choicebutton_internal("pgramselected", caption, clicked, hovered_, unhovered_, button_transform=oscillation, fit_type="pgram")
         else:
-            use choicebutton_internal("pgram", caption, i.action, hovered_, unhovered_)
+            use choicebutton_internal("pgram", caption, clicked, hovered_, unhovered_)
     # Pulsing button
     elif i.caption.startswith('((') and i.caption.endswith('))'):
         default caption = i.caption.lstrip('(').rstrip(')').strip()
-        if selected_choice == n:
-            use choicebutton_internal("selected", caption, i.action, hovered_, unhovered_, button_transform=thumping, fit_type="")
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("outline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, fit_type="")
+        elif selected_choice == n:
+            use choicebutton_internal("selected", caption, clicked, hovered_, unhovered_, button_transform=thumping, fit_type="")
         else:
-            use choicebutton_internal("", caption, i.action, hovered_, unhovered_)
+            use choicebutton_internal("", caption, clicked, hovered_, unhovered_)
     # Sparkly button
     elif i.caption.startswith('*') and i.caption.endswith('*'):
         default caption = i.caption.strip('*').strip()
-        if selected_choice == n:
-            use choicebutton_internal("selected", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("outline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, fit_type="")
+        elif selected_choice == n:
+            use choicebutton_internal("selected", caption, clicked, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
         else:
-            use choicebutton_internal("", caption, i.action, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
+            use choicebutton_internal("", caption, clicked, hovered_, unhovered_, fg="centremenubuttonsparkly animated")
     # Spikey button
     elif i.caption.startswith('^') and i.caption.endswith('^'):
         default caption = i.caption.strip('^').strip()
-        if selected_choice == n:
-            use choicebutton_internal("spikeyselected", caption, i.action, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("spikeyoutline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, choice_ysize=115, fit_type="selected")
+        elif selected_choice == n:
+            use choicebutton_internal("spikeyselected", caption, clicked, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
         else:
-            use choicebutton_internal("spikeyunselected", caption, i.action, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
+            use choicebutton_internal("spikeyunselected", caption, clicked, hovered_, unhovered_, choice_ysize=115, fit_type="selected")
     # Normal button
     else:
-        if selected_choice == n:
-            use choicebutton_internal("selected", i.caption, i.action, hovered_, unhovered_)
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif action_queue is not None  and selected_choice == n:
+            use choicebutton_internal("outline", i.caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, fit_type="")
+        elif selected_choice == n:
+            use choicebutton_internal("selected", i.caption, clicked, hovered_, unhovered_)
         else:
-            use choicebutton_internal("", i.caption, i.action, hovered_, unhovered_)
+            use choicebutton_internal("", i.caption, clicked, hovered_, unhovered_)
 # Setting up the choice pointer.
 default choicepointer_dx1 = 0.0
 default choicepointer_dy1 = 0.0
@@ -208,7 +276,12 @@ screen choice(items):
         yanchor 1.0 ypos 0.8
         at menu_up
         if len(items) <= 6:
-            image "menupointer" at slide(choicepointer_dx1,choicepointer_dy1,choicepointer_dx2,choicepointer_dy2)
+            # Regular pointer during selection prompt
+            if action_queue is None:
+                image "menupointer" at slide(choicepointer_dx1,choicepointer_dy1,choicepointer_dx2,choicepointer_dy2)
+            # After clicking, make it an expanding outline.
+            else:
+                image "menupointeroutline expanding" at slide(choicepointer_dx2,choicepointer_dy2,choicepointer_dx2,choicepointer_dy2)
         if len(items) == 1:
             vbox:
                 xalign 0.5 yanchor 0.0 ypos 0.5
@@ -328,12 +401,25 @@ screen choice(items):
     python:
         # Set up choice button state.
         def start():
-            global selected_choice, choice_state, choice_timer
+            global selected_choice, choice_state, choice_timer, action_queue
             selected_choice = None
             choice_state = [0]*100
             choice_timer = [None]*100
+            action_queue = None
+    if action_queue is not None:
+        timer 0.2 action action_queue
     on "show" action start
     
+# Pointer after clicking an option
+image menupointeroutline expanding:
+    "menupointeroutline"
+    zoom 1.0 alpha 1.0
+    linear 0.1 zoom 1.5 alpha 0.0
+# Choice button after being clicked
+transform buttonexpanding:
+    zoom 1.0 alpha 1.0
+    linear 0.1 zoom 1.5 alpha 0.0
+
 
 # Staticky buttons
 image leftmenubuttonstatic:
@@ -580,6 +666,8 @@ image centremenubuttonpgram:
     "centremenubutton"
 image centremenubuttonpgramselected:
     "centremenubuttonselected"
+image centremenubuttonpgramoutline:
+    "centremenubuttonoutline"
 image leftmenubuttonspikeyselected:
     "leftmenubuttonspikeyselected1"
     pause 0.02
