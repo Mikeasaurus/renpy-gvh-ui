@@ -24,6 +24,11 @@ screen say(who, what):
 # A place to store the texting history while the screen is active.
 default texting_history = None
 
+# Fade-in effect for texting window
+transform texting_fadein:
+    alpha 0.0
+    easein 0.5 alpha 1.0
+
 screen texting(title=None,pov=None,save={},resume=False):
     # Trick for making viewport that autoscrolls to bottom.
     # Source: https://lemmasoft.renai.us/forums/viewtopic.php?p=521419&sid=1f0e9f9e9478f7e2d24b2a653952b3d0#p521419
@@ -33,6 +38,7 @@ screen texting(title=None,pov=None,save={},resume=False):
             yadj.value = float('inf')
     # Frame for the text conversation
     frame:
+        at texting_fadein
         background None
         xsize 0.5
         xpadding 100 ypadding 50
