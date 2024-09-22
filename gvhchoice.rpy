@@ -11,6 +11,8 @@ default choice_state = [0]*100
 default choice_timer = [None]*100
 # Queue up an action to perform after ending animation.
 default action_queue = None
+# Status of resistant choice.  Counts number of clicks on a resistant button.
+default resistant_count = 0
 
 # Internal layout of choice buttons.
 # Using this as a template, to cut down on the amount of copy/pasted layout
@@ -126,7 +128,7 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
             global action_queue
             # If an action was already clicked, then can't click again.
             if action_queue is not None: return
-            action_queue = i.action
+            action_queue = (0.2, i.action)
             renpy.restart_interaction()
         # Increment choice state for multi-stage buttons.
         def inc_state (n):
@@ -153,6 +155,16 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
                 if choice_timer[n] is not None and datetime.now() > choice_timer[n]:
                     return action_()
             return f
+        # Apply resistance (button must be clicked multiple times)
+        def resist(i=i):
+            global resistant_count, action_queue
+            resistant_count += 1
+            if resistant_count >= 4:
+                if action_queue is not None: return
+                #action_queue = (0.2, [SetVariable("resistant_count",5),SetVariable("action_queue",(0.2,i.action))])
+                #action_queue = [(0.2, i.action)]
+                action_queue = [(0.2, SetVariable("resistant_count",5)),(0.4, i.action)]
+            renpy.restart_interaction()
     default hovered_ = Function(hovered_action,n,dx,dy)
     default unhovered_ = unhovered_action
     default inc_state_ = Function(inc_state,n)
@@ -193,6 +205,24 @@ screen choicebutton(n,i,dx=0.0,dy=0.0):
             use choicebutton_internal("wobblyselected", caption, clicked, hovered_, unhovered_, choice_ysize=79)
         else:
             use choicebutton_internal("wobbly", caption, clicked, hovered_, unhovered_, choice_ysize=79)
+    # Resistant choice button
+    elif i.caption.startswith('>') and i.caption.endswith('<'):
+        default caption = i.caption.lstrip('>').rstrip('<').strip()
+        # Hide after clicking (if not selected)
+        if action_queue is not None and selected_choice != n:
+            pass
+        # Add outline effect if it was just clicked.
+        elif resistant_count == 5 and selected_choice == n:
+            use choicebutton_internal("wobblyoutline", caption, do_nothing, hovered_, unhovered_, button_transform=buttonexpanding, choice_ysize=79, fit_type="wobbly")
+        elif selected_choice == n:
+            use choicebutton_internal("wobblyselected", caption, resist, hovered_, unhovered_, choice_ysize=79)
+        else:
+            # Fix the spacing of the button, otherwise if the user hovers the mouse
+            # near the very edge, it will glitch between selected / unselected state.
+            hbox:
+                null width 2
+                use choicebutton_internal("", caption, resist, hovered_, unhovered_)
+                null width 2
     # Parallelogram button
     elif i.caption.startswith('/') and i.caption.endswith('/'):
         default caption = i.caption.strip('/').strip()
@@ -268,7 +298,22 @@ transform slide(dx1,dy1,dx2,dy2):
     xpos 0.5 ypos 0.5
     xanchor 0.5-dx1/3 yanchor 0.5-dy1/3
     ease 0.1 xanchor 0.5-dx2/3 yanchor 0.5-dy2/3
-
+# Transformations for animating resistance progress.
+transform resist_half_rotate:
+    xanchor 0.5 yanchor 0.5
+    linear 0.2 rotate 180
+transform resist_quarter_rotate:
+    xanchor 0.5 yanchor 0.5
+    rotate 180
+    linear 0.2 rotate 270
+transform resist_eighth_rotate:
+    xanchor 0.5 yanchor 0.5
+    rotate 270
+    linear 0.2 rotate 315
+transform resist_final_rotate:
+    xanchor 0.5 yanchor 0.5
+    rotate 315
+    linear 0.2 rotate 360
 # The main screen layout for choices.
 screen choice(items):
     window:
@@ -276,12 +321,38 @@ screen choice(items):
         yanchor 1.0 ypos 0.8
         at menu_up
         if len(items) <= 6:
-            # Regular pointer during selection prompt
-            if action_queue is None:
-                image "menupointer" at slide(choicepointer_dx1,choicepointer_dy1,choicepointer_dx2,choicepointer_dy2)
+            fixed:
+                xsize 90 ysize 90
+                at slide(choicepointer_dx1,choicepointer_dy1,choicepointer_dx2,choicepointer_dy2)
+                # Regular pointer during selection prompt
+                if action_queue is None:
+                    image "menupointer"
+                # Resistance being applied?
+                if resistant_count == 1:
+                    image "menupointerhighlighthalf" at resist_half_rotate:
+                        xalign 0.5 yalign 0.5
+                    image "menupointerhalf"
+                elif resistant_count == 2:
+                    image "menupointerhighlighthalf" id "half1" rotate 180:
+                        xalign 0.5 yalign 0.5
+                    image "menupointerhighlighthalf" id "half2" at resist_quarter_rotate:
+                        xalign 0.5 yalign 0.5
+                elif resistant_count == 3:
+                    image "menupointerhighlighthalf" id "half1" rotate 180:
+                        xalign 0.5 yalign 0.5
+                    image "menupointerhighlighthalf" id "half2" at resist_eighth_rotate:
+                        xalign 0.5 yalign 0.5
+                elif resistant_count == 4:
+                    image "menupointer"
+                    image "menupointerhighlighthalf" id "half1" rotate 180:
+                        xalign 0.5 yalign 0.5
+                    image "menupointerhighlighthalf" id "half2" at resist_final_rotate:
+                        xalign 0.5 yalign 0.5
             # After clicking, make it an expanding outline.
-            else:
+            if action_queue is not None and resistant_count != 4:
                 image "menupointeroutline expanding" at slide(choicepointer_dx2,choicepointer_dy2,choicepointer_dx2,choicepointer_dy2)
+        # Arrange choice buttons on the screen.
+        # Different layout for different number of buttons.
         if len(items) == 1:
             vbox:
                 xalign 0.5 yanchor 0.0 ypos 0.5
@@ -398,16 +469,32 @@ screen choice(items):
                 spacing 30
                 for n,i in enumerate(items):
                     use choicebutton(n,i)
+    # If a resistant button was clicked, then dim out the edges of the screen.
+    if resistant_count == 1:
+        image "resist" at resist_stage1
+    elif resistant_count == 2:
+        image "resist" at resist_stage2
+    elif resistant_count == 3:
+        image "resist" at resist_stage3
+    elif resistant_count == 4:
+        image "resist" at resist_stage4
+    elif resistant_count == 5:
+        image "resist" at resist_stage5
+
     python:
         # Set up choice button state.
         def start():
-            global selected_choice, choice_state, choice_timer, action_queue
+            global selected_choice, choice_state, choice_timer, action_queue, resistant_count
             selected_choice = None
             choice_state = [0]*100
             choice_timer = [None]*100
             action_queue = None
-    if action_queue is not None:
-        timer 0.2 action action_queue
+            resistant_count = 0
+    if isinstance(action_queue,tuple):
+        timer action_queue[0] action action_queue[1]
+    elif isinstance(action_queue,list):
+        for t, a in action_queue:
+            timer t action a
     on "show" action start
     
 # Pointer after clicking an option
@@ -770,3 +857,67 @@ image rightmenubuttonspikeyunselected:
     pause 0.02
     "rightmenubuttonspikey1"
     pause 0.02
+
+# Resistance mask over scene
+image resist:
+    "resist00"
+    pause 0.2
+    "resist01"
+    pause 0.2
+    "resist02"
+    pause 0.2
+    "resist03"
+    pause 0.2
+    "resist04"
+    pause 0.2
+    "resist05"
+    pause 0.2
+    "resist06"
+    pause 0.2
+    "resist07"
+    pause 0.2
+    "resist08"
+    pause 0.2
+    "resist09"
+    pause 0.2
+    "resist10"
+    pause 0.2
+    "resist11"
+    pause 0.2
+    "resist12"
+    pause 0.2
+    "resist13"
+    pause 0.2
+    "resist14"
+    pause 0.2
+    "resist15"
+    pause 0.2
+    "resist16"
+    pause 0.2
+    "resist17"
+    pause 0.2
+    "resist18"
+    pause 0.2
+    "resist19"
+    pause 0.2
+    repeat
+transform resist_stage1:
+    xsize 1.0 ysize 1.0
+    alpha 0.0
+    linear 0.2 alpha 0.4
+transform resist_stage2:
+    xsize 1.0 ysize 1.0
+    alpha 0.4
+    linear 0.2 alpha 0.6
+transform resist_stage3:
+    xsize 1.0 ysize 1.0
+    alpha 0.6
+    linear 0.2 alpha 0.8
+transform resist_stage4:
+    xsize 1.0 ysize 1.0
+    alpha 0.8
+    linear 0.2 alpha 1.0
+transform resist_stage5:
+    xsize 1.0 ysize 1.0
+    alpha 1.0
+    linear 0.2 alpha 0.0
