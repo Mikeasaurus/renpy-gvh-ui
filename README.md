@@ -1,5 +1,11 @@
 # Ren'Py UI elements for GVH fan games
 
+A few UI elements inspired by GVH, that could be used in Ren'Py games.  Tested on Ren'Py version 8.1.3.  Should work on other 8.x versions.  Feel free to post a bug report if things are broken.
+
+Easiest way to get the files (if you're not familiar with Git) is to [download the latest zip archive](https://github.com/Mikeasaurus/renpy-gvh-ui/archive/refs/heads/master.zip).
+
+The following UI elements are available:
+
 ## GVH-style choice menu
 
 This just makes the choice menus styled more like the ones in GVH.  To use them:
